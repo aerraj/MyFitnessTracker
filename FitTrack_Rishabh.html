@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitTrack — Rishabh</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f3ef;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: #e2e0d8;
+    --text: #1a1a18;
+    --text2: #6b6a64;
+    --text3: #9b9a94;
+    --green: #1a7a5a;
+    --green-light: #e6f4ee;
+    --green-mid: #2da876;
+    --green-dark: #145c43;
+    --amber: #b45309;
+    --amber-light: #fef3c7;
+    --red: #b91c1c;
+    --red-light: #fee2e2;
+    --blue: #1d4ed8;
+    --blue-light: #dbeafe;
+    --accent: #1a7a5a;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* TOP NAV */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    gap: 2rem;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .brand-dot {
+    width: 28px; height: 28px;
+    background: var(--green);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .nav-tabs {
+    display: flex;
+    gap: 0;
+    flex: 1;
+    justify-content: center;
+  }
+  .nav-tab {
+    padding: 8px 22px;
+    background: none;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text2);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+  .nav-tab:hover { background: var(--surface2); color: var(--text); }
+  .nav-tab.active {
+    background: var(--green-light);
+    color: var(--green-dark);
+    font-weight: 500;
+  }
+  .streak-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--amber-light);
+    color: var(--amber);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* LAYOUT */
+  .main {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 0;
+    flex: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 2rem 1.5rem;
+    gap: 1.5rem;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .goal-card {
+    background: var(--green);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    color: #fff;
+  }
+  .goal-card .label { font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .goal-card .big { font-size: 28px; font-weight: 600; line-height: 1; }
+  .goal-card .sub { font-size: 12px; opacity: 0.75; margin-top: 4px; }
+  .goal-card .divider { border: none; border-top: 1px solid rgba(255,255,255,0.2); margin: 12px 0; }
+
+  .sidebar-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+  }
+  .sidebar-card .sc-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .tip-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+  .tip-text b { color: var(--green-dark); }
+
+  /* CONTENT */
+  .content { display: flex; flex-direction: column; gap: 1.25rem; }
+  .page { display: none; flex-direction: column; gap: 1.25rem; }
+  .page.active { display: flex; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 1rem;
+  }
+
+  /* METRICS GRID */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .metric-card .mv { font-size: 30px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+  .metric-card .ml { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .metric-card.highlight { background: var(--green-light); border-color: #b6deca; }
+  .metric-card.highlight .mv { color: var(--green-dark); }
+
+  /* PROGRESS BAR */
+  .prog-wrap { margin: 0.5rem 0; }
+  .prog-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+  .prog-track { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .prog-fill { height: 100%; background: var(--green); border-radius: 4px; transition: width 0.5s ease; }
+
+  /* LOG FORM */
+  .form-row { display: flex; gap: 0.75rem; align-items: flex-end; }
+  .form-group { flex: 1; }
+  .form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+  .form-group input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-group input:focus { border-color: var(--green); background: #fff; }
+  .btn {
+    padding: 9px 20px;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--green-dark); }
+  .btn:active { transform: scale(0.98); }
+
+  /* WORKOUT WEEKS */
+  .week-item { border-bottom: 1px solid var(--border); }
+  .week-item:last-child { border-bottom: none; }
+  .week-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    cursor: pointer;
+    user-select: none;
+  }
+  .week-header:hover .week-label { color: var(--green); }
+  .week-label { font-size: 14px; font-weight: 500; transition: color 0.15s; }
+  .week-header-right { display: flex; align-items: center; gap: 8px; }
+  .badge {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .badge-green { background: var(--green-light); color: var(--green-dark); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .chevron { font-size: 16px; color: var(--text3); transition: transform 0.2s; }
+  .chevron.open { transform: rotate(180deg); }
+  .ex-body { display: none; padding: 4px 0 12px; }
+  .ex-body.open { display: block; }
+  .ex-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 5px 0;
+    font-size: 13px;
+  }
+  .ex-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-mid); margin-top: 6px; flex-shrink: 0; }
+  .ex-name { font-weight: 500; color: var(--text); }
+  .ex-desc { color: var(--text2); margin-left: 4px; }
+
+  /* MEAL PLAN */
+  .meal-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .meal-row:last-child { border-bottom: none; }
+  .meal-time { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--green-dark); min-width: 64px; padding-top: 2px; }
+  .meal-name { font-size: 13px; color: var(--text); flex: 1; line-height: 1.5; }
+  .meal-kcal { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text3); white-space: nowrap; padding-top: 2px; }
+
+  /* LOG HISTORY */
+  .log-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .log-table th { text-align: left; font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; padding: 0 8px 10px; }
+  .log-table td { padding: 8px; border-bottom: 1px solid var(--border); color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; }
+  .log-table tr:last-child td { border-bottom: none; }
+  .del-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 15px; padding: 2px 6px; border-radius: 4px; }
+  .del-btn:hover { background: var(--red-light); color: var(--red); }
+  .diff-neg { color: var(--green-dark); font-weight: 500; }
+  .diff-pos { color: var(--red); font-weight: 500; }
+
+  .empty-state { text-align: center; padding: 2rem; color: var(--text3); font-size: 13px; }
+  .chart-wrap { height: 220px; position: relative; }
+
+  /* AVOID LIST */
+  .avoid-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .avoid-pill {
+    background: var(--red-light);
+    color: var(--red);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    font-size: 12px;
+    text-align: center;
+    font-weight: 500;
+  }
+  .do-pill {
+    background: var(--green-light);
+    color: var(--green-dark);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    font-size: 12px;
+    text-align: center;
+    font-weight: 500;
+  }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-dot">F</div>
+    FitTrack — Rishabh
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('home')">&#8962; Home</button>
+    <button class="nav-tab" onclick="switchTab('workout')">&#9651; Workout</button>
+    <button class="nav-tab" onclick="switchTab('diet')">&#9679; Diet</button>
+    <button class="nav-tab" onclick="switchTab('log')">&#8593; Log</button>
+  </div>
+  <div class="streak-pill">&#128293; <span id="streakNum">0</span> day streak</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="goal-card">
+      <div class="label">Goal</div>
+      <div class="big">88 → 68 kg</div>
+      <div class="sub">20 kg in ~5 months</div>
+      <hr class="divider">
+      <div class="label">Target date</div>
+      <div style="font-size:15px;font-weight:500" id="targetDate">—</div>
+      <hr class="divider">
+      <div class="label">BMI (current)</div>
+      <div style="font-size:15px;font-weight:500" id="bmiVal">—</div>
+    </div>
+
+    <div class="sidebar-card">
+      <div class="sc-title">Daily targets</div>
+      <div style="font-size:13px;color:#4b4b44;line-height:2">
+        🔥 1,750 kcal/day<br>
+        💧 3–4 litres water<br>
+        🚶 6,000–8,000 steps<br>
+        🛌 7–8 hrs sleep<br>
+        🥗 100–120g protein
+      </div>
+    </div>
+
+    <div class="sidebar-card">
+      <div class="sc-title">Today's tip</div>
+      <div class="tip-text" id="tipText">Loading…</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- HOME PAGE -->
+    <div class="page active" id="page-home">
+      <div class="metrics-grid">
+        <div class="metric-card highlight">
+          <div class="mv" id="curWeight">88.0</div>
+          <div class="ml">Current kg</div>
+        </div>
+        <div class="metric-card">
+          <div class="mv" id="lostKg">0.0</div>
+          <div class="ml">Lost kg</div>
+        </div>
+        <div class="metric-card">
+          <div class="mv" id="toGoKg">20.0</div>
+          <div class="ml">To go kg</div>
+        </div>
+        <div class="metric-card">
+          <div class="mv" id="weekNum">Wk 1</div>
+          <div class="ml">Current week</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Overall progress to goal</div>
+        <div class="prog-wrap">
+          <div class="prog-labels">
+            <span>88 kg (start)</span>
+            <span id="pctTxt" style="font-weight:500;color:#1a7a5a">0%</span>
+            <span>68 kg (goal)</span>
+          </div>
+          <div class="prog-track"><div class="prog-fill" id="mainBar" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Log today's weight</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Weight (kg)</label>
+            <input type="number" id="quickWeight" placeholder="e.g. 87.5" step="0.1" min="50" max="120">
+          </div>
+          <button class="btn" onclick="quickLog()">Log weight</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORKOUT PAGE -->
+    <div class="page" id="page-workout">
+      <div class="card">
+        <div class="card-title">Progressive 20-week plan — tap a phase to expand</div>
+        <div id="workoutList"></div>
+      </div>
+    </div>
+
+    <!-- DIET PAGE -->
+    <div class="page" id="page-diet">
+      <div class="card">
+        <div class="card-title">Daily meal plan — 1,750 kcal (vegetarian base)</div>
+        <div id="mealPlan"></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Avoid these</div>
+          <div class="avoid-grid" id="avoidGrid"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Protein sources (hit 100–120g/day)</div>
+          <div class="avoid-grid" id="proteinGrid"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">On non-veg days</div>
+        <div style="font-size:13px;color:#6b6a64;line-height:1.7">
+          Prefer <b style="color:#145c43">grilled chicken or fish</b> (100–150g). Avoid mutton, fried items, egg bhurji in excess oil. Pair with salad, not extra roti.
+        </div>
+      </div>
+    </div>
+
+    <!-- LOG PAGE -->
+    <div class="page" id="page-log">
+      <div class="card">
+        <div class="card-title">Add weight entry</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Weight (kg)</label>
+            <input type="number" id="logWeight" placeholder="e.g. 87.2" step="0.1" min="50" max="120">
+          </div>
+          <div class="form-group">
+            <label>Day number</label>
+            <input type="number" id="logDay" placeholder="e.g. 14" step="1" min="1" max="160">
+          </div>
+          <button class="btn" onclick="addLog()">Add</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Weight chart — 88 kg → 68 kg</div>
+        <div class="chart-wrap"><canvas id="wChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">History</div>
+        <div id="historyWrap"><div class="empty-state">No entries yet. Log your first weight above.</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const TIPS = [
+  "Drink a glass of water before every meal — reduces calorie intake by ~75 kcal.",
+  "Walk 30 min briskly today. Aim for 6,000–8,000 steps minimum.",
+  "Sleep 7–8 hours tonight — poor sleep spikes cortisol and slows fat loss.",
+  "Eat protein first at every meal — keeps you full longer and reduces cravings.",
+  "Avoid chai/coffee with sugar. Switch to jaggery or cut sugar entirely.",
+  "Do your workout in the morning — sets discipline for the whole day.",
+  "Eat slowly and chew well — takes 20 min for fullness signals to reach brain.",
+  "Replace evening biscuits with roasted chana or a handful of peanuts.",
+  "Weigh yourself once a week, same morning, before eating.",
+  "Consistency beats perfection. One bad meal won't ruin your progress.",
+  "Add a salad to every meal — it adds volume with almost zero calories.",
+  "Avoid eating after 8 PM — late meals spike insulin and store more fat."
+];
+
+const WEEKS = [
+  {label:"Weeks 1–2 — Foundation",intensity:"Beginner",badge:"badge-green",exercises:[
+    {n:"Brisk walk",d:"30 min daily"},
+    {n:"Bodyweight squats",d:"3 × 15 reps"},
+    {n:"Wall push-ups",d:"3 × 12 reps"},
+    {n:"Plank hold",d:"3 × 20 seconds"},
+    {n:"Jumping jacks",d:"3 × 20 reps"},
+  ]},
+  {label:"Weeks 3–4 — Build",intensity:"Easy–Moderate",badge:"badge-amber",exercises:[
+    {n:"Brisk walk / light jog",d:"35 min daily"},
+    {n:"Squats",d:"3 × 20 reps"},
+    {n:"Push-ups (knee or full)",d:"3 × 15 reps"},
+    {n:"Plank hold",d:"3 × 35 seconds"},
+    {n:"Reverse lunges",d:"3 × 12 each leg"},
+    {n:"Skipping rope",d:"3 × 1 min"},
+  ]},
+  {label:"Weeks 5–6 — Intensity",intensity:"Moderate",badge:"badge-amber",exercises:[
+    {n:"Jog / interval run",d:"40 min (2 min jog, 1 min walk)"},
+    {n:"Squats",d:"4 × 20 reps"},
+    {n:"Push-ups",d:"4 × 15 reps"},
+    {n:"Plank",d:"3 × 45 seconds"},
+    {n:"Lunges",d:"3 × 15 each leg"},
+    {n:"Mountain climbers",d:"3 × 20 reps"},
+    {n:"Skipping",d:"3 × 2 min"},
+  ]},
+  {label:"Weeks 7–8 — Push",intensity:"Moderate–High",badge:"badge-red",exercises:[
+    {n:"Fast jog / run",d:"45 min"},
+    {n:"Jump squats",d:"3 × 15 reps"},
+    {n:"Push-ups",d:"4 × 20 reps"},
+    {n:"Side plank",d:"3 × 30 sec each side"},
+    {n:"Walking lunges",d:"3 × 20 each leg"},
+    {n:"Burpees",d:"3 × 10 reps"},
+    {n:"Skipping",d:"3 × 3 min"},
+  ]},
+  {label:"Weeks 9–12 — Sustain",intensity:"High",badge:"badge-red",exercises:[
+    {n:"Run 5 km or 50 min jog",d:"Daily"},
+    {n:"Jump squats",d:"4 × 20 reps"},
+    {n:"Diamond push-ups",d:"4 × 15 reps"},
+    {n:"Plank variations",d:"3 × 60 seconds"},
+    {n:"Bulgarian split squats",d:"3 × 12 each leg"},
+    {n:"Burpees",d:"3 × 15 reps"},
+    {n:"Skipping",d:"5 × 3 min"},
+  ]},
+  {label:"Weeks 13–20 — Shred & Maintain",intensity:"Peak",badge:"badge-blue",exercises:[
+    {n:"Run 5–6 km or cycle 45 min",d:"Daily"},
+    {n:"Full bodyweight circuit",d:"4 rounds, 30 sec rest between"},
+    {n:"Push-ups",d:"4 × 25 reps"},
+    {n:"Pistol squat (attempt)",d:"3 × 8 each leg"},
+    {n:"Plank + leg raise",d:"3 × 60 seconds"},
+    {n:"Burpees",d:"4 × 20 reps"},
+    {n:"Core circuit",d:"Crunches, leg raises, bicycle — 3 × 20 each"},
+  ]},
+];
+
+const MEALS = [
+  {time:"7:00 AM", meal:"2 whole eggs or paneer 50g + 2 whole wheat roti + 1 seasonal fruit", kcal:"~400 kcal"},
+  {time:"10:00 AM", meal:"Buttermilk (chaas) or 1 cup curd with jeera — no sugar", kcal:"~120 kcal"},
+  {time:"1:00 PM", meal:"1 cup dal / rajma / chhole + 2 roti + sabzi + kachumber salad", kcal:"~500 kcal"},
+  {time:"4:00 PM", meal:"Roasted chana 30g or 1 fruit or handful peanuts", kcal:"~150 kcal"},
+  {time:"7:30 PM", meal:"1 cup dal or sabzi + 1–2 roti or 1 small cup rice + salad", kcal:"~450 kcal"},
+  {time:"9:30 PM", meal:"1 glass warm milk without sugar (optional)", kcal:"~120 kcal"},
+];
+
+const AVOID = ["Maida","White bread","Fried snacks","Cold drinks","Packaged juice","Excess oil","Sugar in chai","Biscuits","Namkeen","White rice (large)","Sweets/mithai","Alcohol"];
+const PROTEIN = ["Dal / lentils","Paneer","Curd / dahi","Soya chunks","Rajma","Chhole","Eggs","Tofu","Sprouts","Peanuts","Milk","Low-fat cheese"];
+
+let logs = JSON.parse(localStorage.getItem('ft_logs') || '[]');
+let streak = parseInt(localStorage.getItem('ft_streak') || '0');
+let lastLog = localStorage.getItem('ft_lastLog') || '';
+let chart = null;
+let openWeek = -1;
+
+function save() {
+  localStorage.setItem('ft_logs', JSON.stringify(logs));
+  localStorage.setItem('ft_streak', streak);
+  localStorage.setItem('ft_lastLog', lastLog);
+}
+
+function switchTab(t) {
+  ['home','workout','diet','log'].forEach((p,i) => {
+    document.getElementById('page-' + p).classList.toggle('active', p === t);
+    document.querySelectorAll('.nav-tab')[i].classList.toggle('active', p === t);
+  });
+  if (t === 'log') setTimeout(renderChart, 80);
+}
+
+function renderHome() {
+  const cur = logs.length > 0 ? logs[logs.length - 1].w : 88;
+  const lost = Math.max(0, 88 - cur);
+  const toGo = Math.max(0, cur - 68);
+  const pct = Math.min(100, Math.round((lost / 20) * 100));
+  const daysSince = logs.length > 0 ? logs[logs.length - 1].d : 0;
+  const wk = 'Wk ' + Math.min(20, Math.floor(daysSince / 7) + 1);
+  const bmi = (cur / (1.76 * 1.76)).toFixed(1);
+  const targetDays = new Date(); targetDays.setDate(targetDays.getDate() + Math.round(toGo / 0.5 * 7));
+
+  document.getElementById('curWeight').textContent = cur.toFixed(1);
+  document.getElementById('lostKg').textContent = lost.toFixed(1);
+  document.getElementById('toGoKg').textContent = toGo.toFixed(1);
+  document.getElementById('weekNum').textContent = wk;
+  document.getElementById('mainBar').style.width = pct + '%';
+  document.getElementById('pctTxt').textContent = pct + '%';
+  document.getElementById('streakNum').textContent = streak;
+  document.getElementById('bmiVal').textContent = bmi + ' kg/m²';
+  document.getElementById('targetDate').textContent = targetDays.toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+
+  const tipIdx = Math.floor(Date.now() / 86400000) % TIPS.length;
+  document.getElementById('tipText').innerHTML = TIPS[tipIdx];
+}
+
+function buildWorkout() {
+  let html = '';
+  WEEKS.forEach((w, i) => {
+    html += `<div class="week-item">
+      <div class="week-header" onclick="toggleWeek(${i})">
+        <span class="week-label">${w.label}</span>
+        <div class="week-header-right">
+          <span class="badge ${w.badge}">${w.intensity}</span>
+          <span class="chevron" id="chev${i}">&#8964;</span>
+        </div>
+      </div>
+      <div class="ex-body" id="ex${i}">`;
+    w.exercises.forEach(e => {
+      html += `<div class="ex-row"><div class="ex-dot"></div><span><span class="ex-name">${e.n}</span><span class="ex-desc">— ${e.d}</span></span></div>`;
+    });
+    html += `</div></div>`;
+  });
+  document.getElementById('workoutList').innerHTML = html;
+}
+
+function toggleWeek(i) {
+  const el = document.getElementById('ex' + i);
+  const ch = document.getElementById('chev' + i);
+  const isOpen = el.classList.contains('open');
+  document.querySelectorAll('.ex-body').forEach(e => e.classList.remove('open'));
+  document.querySelectorAll('[id^=chev]').forEach(e => { e.classList.remove('open'); });
+  if (!isOpen) { el.classList.add('open'); ch.classList.add('open'); }
+}
+
+function buildMeals() {
+  let html = '';
+  MEALS.forEach(m => {
+    html += `<div class="meal-row">
+      <div class="meal-time">${m.time}</div>
+      <div class="meal-name">${m.meal}</div>
+      <div class="meal-kcal">${m.kcal}</div>
+    </div>`;
+  });
+  document.getElementById('mealPlan').innerHTML = html;
+
+  document.getElementById('avoidGrid').innerHTML = AVOID.map(a => `<div class="avoid-pill">${a}</div>`).join('');
+  document.getElementById('proteinGrid').innerHTML = PROTEIN.map(p => `<div class="do-pill">${p}</div>`).join('');
+}
+
+function quickLog() {
+  const v = parseFloat(document.getElementById('quickWeight').value);
+  if (isNaN(v) || v < 50 || v > 120) { alert('Enter a valid weight (50–120 kg)'); return; }
+  const today = new Date().toDateString();
+  const d = logs.length > 0 ? logs[logs.length - 1].d + 1 : 1;
+  logs.push({ w: v, d: d, date: today });
+  updateStreak(today);
+  save(); renderHome(); renderHistory();
+  document.getElementById('quickWeight').value = '';
+}
+
+function addLog() {
+  const w = parseFloat(document.getElementById('logWeight').value);
+  const d = parseInt(document.getElementById('logDay').value);
+  if (isNaN(w) || w < 50 || w > 120) { alert('Enter valid weight (50–120 kg)'); return; }
+  if (isNaN(d) || d < 1) { alert('Enter valid day number'); return; }
+  logs.push({ w, d, date: new Date().toDateString() });
+  logs.sort((a, b) => a.d - b.d);
+  save(); renderHistory(); renderChart();
+  document.getElementById('logWeight').value = '';
+  document.getElementById('logDay').value = '';
+}
+
+function updateStreak(today) {
+  if (lastLog === today) return;
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  streak = (lastLog === yesterday.toDateString()) ? streak + 1 : 1;
+  lastLog = today;
+}
+
+function delLog(i) {
+  if (!confirm('Delete this entry?')) return;
+  logs.splice(i, 1); save(); renderHistory(); renderChart(); renderHome();
+}
+
+function renderHistory() {
+  const el = document.getElementById('historyWrap');
+  if (!logs.length) { el.innerHTML = '<div class="empty-state">No entries yet. Log your first weight above.</div>'; return; }
+  let html = `<table class="log-table"><thead><tr><th>Day</th><th>Date</th><th>Weight</th><th>Change</th><th></th></tr></thead><tbody>`;
+  [...logs].reverse().forEach((l, ri) => {
+    const idx = logs.length - 1 - ri;
+    const prev = idx > 0 ? logs[idx - 1].w : null;
+    const diff = prev !== null ? (l.w - prev) : null;
+    const diffStr = diff !== null ? (diff > 0 ? '+' + diff.toFixed(1) : diff.toFixed(1)) : '—';
+    const cls = diff === null ? '' : diff < 0 ? 'diff-neg' : diff > 0 ? 'diff-pos' : '';
+    html += `<tr>
+      <td>Day ${l.d}</td>
+      <td style="font-family:'DM Sans',sans-serif;color:#6b6a64">${l.date}</td>
+      <td>${l.w.toFixed(1)} kg</td>
+      <td class="${cls}">${diffStr} kg</td>
+      <td><button class="del-btn" onclick="delLog(${idx})">&#10005;</button></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+  renderHome();
+}
+
+function renderChart() {
+  const ctx = document.getElementById('wChart').getContext('2d');
+  if (chart) chart.destroy();
+  const pts = logs.length ? logs.map(l => ({ x: l.d, y: l.w })) : [{ x: 0, y: 88 }];
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        {
+          label: 'Weight (kg)',
+          data: pts,
+          borderColor: '#1a7a5a',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointBackgroundColor: '#1a7a5a',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          fill: true,
+          backgroundColor: 'rgba(26,122,90,0.07)',
+          tension: 0.35
+        },
+        {
+          label: 'Goal (68 kg)',
+          data: [{ x: 0, y: 68 }, { x: 160, y: 68 }],
+          borderColor: 'rgba(185,28,28,0.4)',
+          borderWidth: 1.5,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.dataset.label === 'Weight (kg)' ? ` ${ctx.parsed.y.toFixed(1)} kg` : ''
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          title: { display: true, text: 'Day', font: { size: 11 }, color: '#9b9a94' },
+          ticks: { font: { size: 11 }, color: '#9b9a94', maxTicksLimit: 8 },
+          grid: { color: 'rgba(0,0,0,0.05)' }
+        },
+        y: {
+          min: 60, max: 92,
+          ticks: { font: { size: 11 }, color: '#9b9a94', stepSize: 4, callback: v => v + ' kg' },
+          grid: { color: 'rgba(0,0,0,0.05)' }
+        }
+      }
+    }
+  });
+}
+
+buildWorkout();
+buildMeals();
+renderHome();
+renderHistory();
+</script>
+</body>
+</html>
